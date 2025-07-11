@@ -1,7 +1,6 @@
 const ejs = require("ejs");
 const express = require("express");
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require("puppeteer");
 const path = require("path");
 const cors = require("cors")
 
@@ -46,13 +45,9 @@ app.post("/generate-pdf", async (req, res) => {
 
         // Launch Puppeteer
         const browser = await puppeteer.launch({
-            args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
-            defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
-            ignoreHTTPSErrors: true,
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
-
 
         const page = await browser.newPage();
 
@@ -87,7 +82,7 @@ app.post("/generate-pdf", async (req, res) => {
 
     } catch (error) {
         console.error('PDF generation error:', error);
-        return res.status(500).json({ error: error });
+        return res.status(500).json({ error: "Failed to generate PDF" });
     }
 });
 
