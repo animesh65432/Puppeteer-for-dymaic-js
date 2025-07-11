@@ -1,10 +1,9 @@
 const ejs = require("ejs");
 const express = require("express");
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require("puppeteer");
+const puppeteerCore = require("@sparticuz/chromium")
 const path = require("path");
 const cors = require("cors")
-
 const app = express();
 app.use(express.json());
 
@@ -33,10 +32,7 @@ app.post("/user", async (req, res) => {
 });
 app.post("/generate-pdf", async (req, res) => {
     try {
-        const userData = req.body;
-        console.log("Generating PDF for:", userData);
-
-        // Render the EJS template with user data
+        const userData = req.body
         const html = await ejs.renderFile(path.join(views, "download.ejs"), {
             name: userData.name,
             mail: userData.mail,
@@ -44,23 +40,18 @@ app.post("/generate-pdf", async (req, res) => {
             generatedAt: new Date().toLocaleDateString()
         });
 
-        // Launch Puppeteer
-        const browser = await puppeteer.launch({
+
+        const browser = await puppeteerCore.launch({
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
             executablePath: await chromium.executablePath(),
             headless: chromium.headless,
         });
 
-
         const page = await browser.newPage();
 
-        // Set the HTML content
-        await page.setContent(html, {
-            waitUntil: 'networkidle0'
-        });
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
-        // Generate PDF
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -74,7 +65,6 @@ app.post("/generate-pdf", async (req, res) => {
 
         await browser.close();
 
-        // Set response headers for PDF download
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="user-details-${userData.name.replace(/\s+/g, '-')}.pdf"`,
