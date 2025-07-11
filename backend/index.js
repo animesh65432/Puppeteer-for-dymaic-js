@@ -35,6 +35,13 @@ app.post("/generate-pdf", async (req, res) => {
         const userData = req.body;
         console.log("Generating PDF for:", userData);
 
+        // Validate input data
+        if (!userData.name || !userData.mail || !userData.location) {
+            return res.status(400).json({ 
+                error: "Missing required fields: name, mail, and location are required" 
+            });
+        }
+
         // Render the EJS template with user data
         const html = await ejs.renderFile(path.join(views, "download.ejs"), {
             name: userData.name,
@@ -43,11 +50,62 @@ app.post("/generate-pdf", async (req, res) => {
             generatedAt: new Date().toLocaleDateString()
         });
 
-        // Launch Puppeteer
-        const browser = await puppeteer.launch({
+        console.log("HTML template rendered successfully");
+
+        // Launch Puppeteer with production-ready configuration
+        console.log("Launching browser...");
+        
+        // Determine Chrome executable path based on environment
+        let executablePath;
+        const fs = require('fs');
+        
+        // Common Chrome executable paths for different environments
+        const chromePaths = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+        ];
+        
+        // Find available Chrome executable
+        for (const path of chromePaths) {
+            if (fs.existsSync(path)) {
+                executablePath = path;
+                console.log(`Using Chrome at: ${path}`);
+                break;
+            }
+        }
+        
+        // Launch configuration
+        const launchConfig = {
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-default-browser-check',
+                '--no-zygote',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection'
+            ]
+        };
+        
+        // Only set executablePath if we found one (for deployment compatibility)
+        if (executablePath) {
+            launchConfig.executablePath = executablePath;
+        }
+        
+        const browser = await puppeteer.launch(launchConfig);
+
+        console.log("Browser launched successfully");
 
         const page = await browser.newPage();
 
@@ -55,6 +113,8 @@ app.post("/generate-pdf", async (req, res) => {
         await page.setContent(html, {
             waitUntil: 'networkidle0'
         });
+
+        console.log("HTML content set successfully");
 
         // Generate PDF
         const pdfBuffer = await page.pdf({
@@ -67,6 +127,8 @@ app.post("/generate-pdf", async (req, res) => {
                 left: '20px'
             }
         });
+
+        console.log("PDF generated successfully, size:", pdfBuffer.length, "bytes");
 
         await browser.close();
 
@@ -82,7 +144,13 @@ app.post("/generate-pdf", async (req, res) => {
 
     } catch (error) {
         console.error('PDF generation error:', error);
-        return res.status(500).json({ error: "Failed to generate PDF" });
+        console.error('Error stack:', error.stack);
+        
+        // Return detailed error information for debugging
+        return res.status(500).json({ 
+            error: "Failed to generate PDF",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
