@@ -45,14 +45,11 @@ app.post("/generate-pdf", async (req, res) => {
             args: chromium.args,
             defaultViewport: chromium.defaultViewport,
             executablePath: await chromium.executablePath(),
-            headless: chromium.headless,
-            ignoreHTTPSErrors: true
+            headless: chromium.headless
         });
 
         const page = await browser.newPage();
-
         await page.setContent(html, { waitUntil: 'networkidle0' });
-
         const pdfBuffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -71,7 +68,7 @@ app.post("/generate-pdf", async (req, res) => {
             'Content-Disposition': `attachment; filename="user-details-${userData.name.replace(/\s+/g, '-')}.pdf"`,
             'Content-Length': pdfBuffer.length
         });
-        res.send(pdfBuffer);
+        return res.send(pdfBuffer);
 
     } catch (error) {
         console.error('PDF generation error:', error);
