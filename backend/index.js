@@ -82,7 +82,7 @@ app.post("/generate-pdf", async (req, res) => {
 
     } catch (error) {
         console.error('PDF generation error:', error);
-        return res.status(500).json({ error: "Failed to generate PDF" });
+        return res.status(500).json({ error: error });
     }
 });
 
