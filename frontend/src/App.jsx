@@ -13,7 +13,7 @@ function App() {
 
     try {
 
-      const response = await fetch("http://localhost:3000/generate-pdf", {
+      const response = await fetch("https://puppeteer-for-dymaic-js-1miw.vercel.app/generate-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userInput),
