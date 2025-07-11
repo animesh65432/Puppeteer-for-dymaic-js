@@ -1,2 +1,17 @@
 node_modules/
 package-lock.json
+
+# Test files and artifacts
+*.pdf
+test-*.js
+*.log
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# OS generated files
+.DS_Store
+Thumbs.db
