@@ -1,7 +1,7 @@
 const ejs = require("ejs");
 const express = require("express");
-const puppeteer = require("puppeteer");
-const puppeteerCore = require("@sparticuz/chromium")
+const chromium = require("@sparticuz/chromium");
+const puppeteerCore = require("puppeteer-core")
 const path = require("path");
 const cors = require("cors")
 const app = express();
@@ -46,6 +46,7 @@ app.post("/generate-pdf", async (req, res) => {
             defaultViewport: chromium.defaultViewport,
             executablePath: await chromium.executablePath(),
             headless: chromium.headless,
+            ignoreHTTPSErrors: true
         });
 
         const page = await browser.newPage();
@@ -70,8 +71,6 @@ app.post("/generate-pdf", async (req, res) => {
             'Content-Disposition': `attachment; filename="user-details-${userData.name.replace(/\s+/g, '-')}.pdf"`,
             'Content-Length': pdfBuffer.length
         });
-
-        // Send the PDF
         res.send(pdfBuffer);
 
     } catch (error) {
